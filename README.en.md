@@ -95,6 +95,24 @@ This approach makes it possible to display the exact image produced by NBTrackr 
 
 ---
 
+## Screenshots and Preview
+
+For a complete visual overview of all setups and modes:
+
+[PREVIEW.en.md](PREVIEW.en.md)
+
+### Highlights
+
+#### ethan-davies — Custom Ninjabrain Bot Overlay
+
+![Custom Overlay](./screenshots/ethan-davies/waywall_ninbot_overlay_custom_crop.png)
+
+#### soup12h — NBTrackr Integration
+
+![NBTrackr](./screenshots/soup12h/nbtrack_overlay_crop.png)
+
+---
+
 ## Other Projects Used (Directly or Indirectly)
 
 ### Waywall

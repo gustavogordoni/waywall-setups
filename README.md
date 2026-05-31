@@ -95,6 +95,28 @@ Essa abordagem permite exibir dentro do Waywall exatamente a imagem produzida pe
 
 ---
 
+## Screenshots e Preview
+
+Para visualizar todos os modos (Wide, Tall, Thin) e detalhes de cada setup:
+
+[PREVIEW.md](PREVIEW.md)
+
+### Destaques
+
+#### ethan-davies — Overlay customizado do Ninjabrain Bot
+
+Comparação entre o overlay original e minha versão modificada.
+
+![Custom Overlay](./screenshots/ethan-davies/waywall_ninbot_overlay_custom_crop.png)
+
+#### soup12h — Integração com NBTrackr
+
+Protótipo da integração que exibe diretamente a imagem produzida pelo NBTrackr dentro do Waywall.
+
+![NBTrackr](./screenshots/soup12h/nbtrack_overlay_crop.png)
+
+---
+
 ## Demais projetos utilizados (direta ou indiretamente)
 
 ### Waywall
