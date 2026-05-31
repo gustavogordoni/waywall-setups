@@ -1,7 +1,7 @@
 # Waywall Setups Archive
 
 [![GitHub last commit](https://img.shields.io/github/last-commit/gustavogordoni/waywall-setups?color=purple)](https://github.com/gustavogordoni/waywall-setups/commits/)
-[![License](https://img.shields.io/github/license/gustavogordoni/waywall-setups)](https://github.com/gustavogordoni/waywall-setups/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/gustavogordoni/waywall-setups)](https://github.com/gustavogordoni/waywall-setups/blob/master/LICENSE)
 
 [English Version](README.en.md)
 
