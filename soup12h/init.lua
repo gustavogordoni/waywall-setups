@@ -35,14 +35,18 @@ local read_file = function(name)
     end
 end
 
--- == config variables ==
-local ninbot_anchor, ninbot_opacity, ninbot_offset_y = "bottomright", 0.5, 0
+-- == config variables ==   
+local ninbot_anchor, ninbot_opacity, ninbot_offset_y = "bottomright", 0.75, 0
 
 local normal_sens, tall_sens = 6.05751073, 0.13804772
-local xkb_layout = "mc"
+local xkb_layout = "br"
 local keybinds = {
     enabled = {
-        ["Z"] = "F3"
+        ["Z"] = "F3",
+        ["KP0"] = "F3",
+        ["KP7"] = "B",
+        ["KP8"] = "G",
+        ["KP4"] = "LEFTSHIFT"
 
     },
 
@@ -54,6 +58,29 @@ local keys = {
     thin = "*-Alt_L",
     tall = "*-F2",
     wide = "*-V",
+
+    -- | Numpad | Keysym |
+    -- | - | ----------- |
+    -- | 0 | `KP_Insert` |
+    -- | 1 | `KP_End`    |
+    -- | 2 | `KP_Down`   |
+    -- | 3 | `KP_Next`   |
+    -- | 4 | `KP_Left`   |
+    -- | 5 | `KP_Begin`  |
+    -- | 6 | `KP_Right`  |
+    -- | 7 | `KP_Home`   |
+    -- | 8 | `KP_Up`     |
+    -- | 9 | `KP_Prior`  |
+
+    create_world = "KP_Begin",
+    exit_world = "KP_Right",
+
+    rd8_ed50 = "KP_End",
+    rd18_ed500 = "KP_Down",
+    rd24_ed500 = "KP_Next",
+
+    fov30 = "KP_Subtract",
+    fov100 = "KP_Add",
 
     -- apps
     toggle_ninbot = "*-apostrophe",
@@ -67,7 +94,7 @@ local keys = {
 -- == main config ==
 local config = {
     input = {
-        layout = br,
+        layout = xkb_layout,
         repeat_rate = 100,
         repeat_delay = 150,
         remaps = keybinds.enabled,
@@ -800,6 +827,20 @@ local ensure_ninjabrain = Processes.ensure_java_jar(waywall, java_path, ninbot_p
     {"-Dawt.useSystemAAFontSettings=on"})(ninbot_path)
 local ensure_paceman = Processes.ensure_java_jar(waywall, java_path, paceman_path, {"--nogui"})(paceman_path)
 
+-- == nbtrackr process ==
+local is_nbtrackr_running = function()
+    local handle = io.popen("pgrep -fx 'nbtrackr --headless'")
+    local result = handle:read("*l")
+    handle:close()
+    return result ~= nil
+end
+
+local ensure_nbtrackr = function()
+    if not is_nbtrackr_running() then
+        waywall.exec("nbtrackr --headless")
+    end
+end
+
 -- == action helper booleans ==
 -- = ninbot =
 local is_ninb_ensured = false
@@ -819,52 +860,25 @@ local remaps_active = true
 local remaps_text = nil
 local tall_enabled = false
 
--- == nbt overlay ==
-local nbt_overlay = nil
+local function run_sequence(seq)
+    for _, item in ipairs(seq) do
+        local key, count
 
--- dimensões do wide mode (referência para posicionamento)
-local wide_w = 1920
-local wide_h = 300
+        if type(item) == "table" then
+            key, count = item[1], item[2]
+        else
+            key, count = item, 1
+        end
 
--- lê as dimensões reais do PNG via bytes do header PNG (sem dependências externas)
-local function read_png_dimensions(path)
-    local f = io.open(path, "rb")
-    if not f then
-        return nil, nil
+        for i = 1, count do
+            waywall.press_key(key)
+        end
     end
-    local data = f:read(28)
-    f:close()
-    if not data or #data < 28 then
-        return nil, nil
-    end
-    -- bytes 17-20 = width, bytes 21-24 = height (big-endian)
-    local w = data:byte(17) * 16777216 + data:byte(18) * 65536 + data:byte(19) * 256 + data:byte(20)
-    local h = data:byte(21) * 16777216 + data:byte(22) * 65536 + data:byte(23) * 256 + data:byte(24)
-    return w, h
 end
 
-local function show_nbt_overlay()
-    if nbt_overlay then
-        nbt_overlay:close()
-        nbt_overlay = nil
-    end
-
-    local img_w, img_h = read_png_dimensions("/tmp/imgpin-overlay.png")
-    img_w = img_w or 306
-    img_h = img_h or 94
-
-    local dst_x = wide_w - img_w
-    local dst_y = math.floor((wide_h - img_h) / 2)
-
-    nbt_overlay = waywall.image("/tmp/imgpin-overlay.png", {
-        dst = {
-            x = dst_x,
-            y = dst_y,
-            w = img_w,
-            h = img_h
-        }
-    })
-end
+local is_ninb_ensured = false
+local imgpin_overlay = nil
+local imgpin_counter = 0
 
 -- == config actions ==
 local actions = Keys.actions({
@@ -901,14 +915,13 @@ local actions = Keys.actions({
     -- = fullscreen toggle =
     [keys.fullscreen] = waywall.toggle_fullscreen,
 
-    -- = nbb =
     [keys.toggle_ninbot] = function()
         if not is_ninb_ensured then
             ensure_ninjabrain()
             is_ninb_ensured = true
             waywall.show_floating(true)
-            waywall.sleep(3000)
-            os.execute("nbtrackr --headless &")
+            waywall.sleep(2000)
+            ensure_nbtrackr()
         else
             helpers.toggle_floating()
         end
@@ -917,11 +930,51 @@ local actions = Keys.actions({
     ["*-C"] = function()
         if waywall.get_key("F3") then
             waywall.show_floating(true)
-            show_nbt_overlay()
             return false
         else
             return false
         end
+    end,
+
+    ["F5"] = function()
+        if waywall.get_key("F3") then
+            waywall.press_key("C")
+            waywall.sleep(100)
+            local f = io.open("/tmp/imgpin-overlay.png", "rb")
+            if f then
+                f:seek("set", 16)
+                local w1, w2, w3, w4 = f:read(1):byte(), f:read(1):byte(), f:read(1):byte(), f:read(1):byte()
+                local h1, h2, h3, h4 = f:read(1):byte(), f:read(1):byte(), f:read(1):byte(), f:read(1):byte()
+                f:close()
+                local img_w = w1 * 16777216 + w2 * 65536 + w3 * 256 + w4
+                local img_h = h1 * 16777216 + h2 * 65536 + h3 * 256 + h4
+                imgpin_counter = imgpin_counter + 1
+                local tmp_path = "/tmp/imgpin-overlay-" .. (imgpin_counter % 2) .. ".png"
+                os.execute("cp /tmp/imgpin-overlay.png " .. tmp_path)
+                if imgpin_overlay then
+                    imgpin_overlay:close()
+                    imgpin_overlay = nil
+                end
+                imgpin_overlay = waywall.image(tmp_path, {
+                    dst = {
+                        x = 0,
+                        y = 245,
+                        w = img_w,
+                        h = img_h
+                    }
+                })
+            end
+        else
+            return false
+        end
+    end,
+
+    ["*-P"] = function()
+        if imgpin_overlay then
+            imgpin_overlay:close()
+            imgpin_overlay = nil
+        end
+        return false
     end,
 
     -- = paceman =
@@ -945,7 +998,7 @@ local actions = Keys.actions({
             })
             remaps_text = waywall.text("rebinds off", {
                 x = 100,
-                y = 100,        
+                y = 100,
                 color = "#FFFFFF",
                 size = 2
             })
@@ -957,6 +1010,37 @@ local actions = Keys.actions({
                 layout = xkb_layout
             })
         end
+    end,
+
+    [keys.create_world] = function()
+        run_sequence({"Tab", "Space", {"Tab", 3}, "Space", "Tab", "Space", "Space", {"Tab", 6}, "Space"})
+    end,
+
+    [keys.exit_world] = function()
+        run_sequence({"Esc", {"Tab", 8}, "Space"})
+    end,
+
+    [keys.rd18_ed500] = function()
+        run_sequence({"Esc", {"Tab", 6}, "Space", {"Tab", 6}, "Space", {"Tab", 4}, {"Left", 500}, {"Right", 75},
+                      {"Tab", 13}, {"Right", 150}, "Esc", "Esc"})
+    end,
+
+    [keys.rd8_ed50] = function()
+        run_sequence({"Esc", {"Tab", 6}, "Space", {"Tab", 6}, "Space", {"Tab", 4}, {"Left", 500}, {"Right", 30},
+                      {"Tab", 13}, {"Left", 150}, "Esc", "Esc"})
+    end,
+
+    [keys.rd24_ed500] = function()
+        run_sequence({"Esc", {"Tab", 6}, "Space", {"Tab", 6}, "Space", {"Tab", 4}, {"Left", 500}, {"Right", 105},
+                      {"Tab", 13}, {"Right", 150}, "Esc", "Esc"})
+    end,
+
+    [keys.fov30] = function()
+        run_sequence({"Esc", {"Tab", 6}, "Space", "Tab", {"Left", 500}, "Esc"})
+    end,
+
+    [keys.fov100] = function()
+        run_sequence({"Esc", {"Tab", 6}, "Space", "Tab", {"Left", 500}, {"Right", 125}, "Esc"})
     end
 })
 

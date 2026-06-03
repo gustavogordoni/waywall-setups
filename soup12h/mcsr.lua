@@ -13,14 +13,16 @@ local Processes = require("waywork.processes")
 local resources_folder = os.getenv("HOME") .. "/" .. ".config/waywall/resources/"
 
 local bg_path = resources_folder .. "images/background.png"
-
 local eye_overlay_path = resources_folder .. "images/measuring_overlay.png"
+local border_paths = {
+    tall = resources_folder .. "images/overlay_tall.png",
+    thin = resources_folder .. "images/overlay_thin.png",
+    wide = resources_folder .. "images/overlay_wide.png"
+}
 
 local java_path = "/usr/lib/jvm/java-26-openjdk/bin/java"
 local paceman_path = resources_folder .. "jars/paceman-tracker-0.7.1.jar"
 local ninbot_path = resources_folder .. "jars/Ninjabrain-Bot-1.5.2.jar"
-
-local cursor_theme, cursor_icon = "crosshair-cursors", "draft_small"
 
 -- == helper functions ==
 -- = read file function for shaders =
@@ -33,20 +35,21 @@ local read_file = function(name)
     end
 end
 
--- == config variables ==
+-- == config variables ==   
 local ninbot_anchor, ninbot_opacity, ninbot_offset_y = "bottomright", 0.75, 0
 
--- local normal_sens = 7.05751073
-local normal_sens = 6.05751073
--- local tall_sens = 0.47609545
-local tall_sens = 0.13804772
-
-local xkb_layout = "mc"
+local normal_sens, tall_sens = 6.05751073, 0.13804772
+local xkb_layout = "br"
 local keybinds = {
     enabled = {
-        ["Z"] = "F3"
+        ["Z"] = "F3",
+        ["KP0"] = "F3",
+        ["KP7"] = "B",
+        ["KP8"] = "G",
+        ["KP4"] = "LEFTSHIFT"
 
     },
+
     disabled = {}
 }
 
@@ -56,7 +59,28 @@ local keys = {
     tall = "*-F2",
     wide = "*-V",
 
-    create_world = "9",
+    -- | Numpad | Keysym |
+    -- | - | ----------- |
+    -- | 0 | `KP_Insert` |
+    -- | 1 | `KP_End`    |
+    -- | 2 | `KP_Down`   |
+    -- | 3 | `KP_Next`   |
+    -- | 4 | `KP_Left`   |
+    -- | 5 | `KP_Begin`  |
+    -- | 6 | `KP_Right`  |
+    -- | 7 | `KP_Home`   |
+    -- | 8 | `KP_Up`     |
+    -- | 9 | `KP_Prior`  |
+
+    create_world = "KP_Begin",
+    exit_world = "KP_Right",
+
+    rd8_ed50 = "KP_End",
+    rd18_ed500 = "KP_Down",
+    rd24_ed500 = "KP_Next",
+
+    fov30 = "KP_Subtract",
+    fov100 = "KP_Add",
 
     -- apps
     toggle_ninbot = "*-apostrophe",
@@ -70,7 +94,7 @@ local keys = {
 -- == main config ==
 local config = {
     input = {
-        layout = br,
+        layout = xkb_layout,
         repeat_rate = 100,
         repeat_delay = 150,
         remaps = keybinds.enabled,
@@ -78,7 +102,7 @@ local config = {
         confine_pointer = false
     },
     theme = {
-        background = "#ff0000",
+        background = "#000000",
         background_png = bg_path,
         ninb_anchor = {
             position = ninbot_anchor,
@@ -86,8 +110,9 @@ local config = {
             y = ninbot_offset_y
         },
         ninb_opacity = ninbot_opacity,
-        cursor_theme = cursor_theme,
-        cursor_icon = cursor_icon
+        cursor_theme = "Adwaita",
+        cursor_icon = "crosshair",
+        cursor_size = 24
     },
     experimental = {
         debug = false,
@@ -116,14 +141,6 @@ local config = {
             vertex = read_file(resources_folder .. "shaders/general.vert"),
             fragment = read_file(resources_folder .. "shaders/frag/spawner_bg.frag")
         },
-        ["chest"] = {
-            vertex = read_file(resources_folder .. "shaders/general.vert"),
-            fragment = read_file(resources_folder .. "shaders/frag/chest.frag")
-        },
-        ["chest_bg"] = {
-            vertex = read_file(resources_folder .. "shaders/general.vert"),
-            fragment = read_file(resources_folder .. "shaders/frag/chest_bg.frag")
-        },
         ["text"] = {
             vertex = read_file(resources_folder .. "shaders/general.vert"),
             fragment = read_file(resources_folder .. "shaders/frag/text.frag")
@@ -150,10 +167,10 @@ for i = 0, 3, 1 do
             h = 9
         },
         dst = {
-            x = 1685,
+            x = 1630,
             y = 720,
-            w = 33 * 4,
-            h = 9 * 4
+            w = 33 * 7,
+            h = 9 * 7
         },
         depth = 3,
         shader = "spawn"
@@ -166,51 +183,13 @@ for i = 0, 3, 1 do
             h = 9
         },
         dst = {
-            x = 1685 + 4,
-            y = 720 + 4,
-            w = 33 * 4,
-            h = 9 * 4
+            x = 1630 + 7,
+            y = 720 + 7,
+            w = 33 * 7,
+            h = 9 * 7
         },
         depth = 2,
         shader = "spawn_bg"
-    }, 0, 0)
-end
-
--- chest
-for i = 0, 3, 1 do
-    helpers.res_mirror( -- mob_spawner
-    {
-        src = {
-            x = 1827,
-            y = 859 + 8 * i,
-            w = 33,
-            h = 9
-        },
-        dst = {
-            x = 1685,
-            y = 755,
-            w = 33 * 4,
-            h = 9 * 4
-        },
-        depth = 3,
-        shader = "chest"
-    }, 0, 0)
-    helpers.res_mirror( -- mob_spawner
-    {
-        src = {
-            x = 1827,
-            y = 859 + 8 * i,
-            w = 33,
-            h = 9
-        },
-        dst = {
-            x = 1685 + 4,
-            y = 755 + 4,
-            w = 33 * 4,
-            h = 9 * 4
-        },
-        depth = 2,
-        shader = "chest_bg"
     }, 0, 0)
 end
 
@@ -780,6 +759,24 @@ for i = 0, 6, 1 do
     }, 0, 0)
 end
 
+-- = res borders =
+for _, name in ipairs({"wide", "thin", "tall"}) do
+    scene:register(name .. "_border", {
+        kind = "image",
+        path = border_paths[name],
+        options = {
+            dst = {
+                x = 0,
+                y = 0,
+                w = 1920,
+                h = 1080
+            }
+        },
+        groups = {name},
+        depth = -1
+    })
+end
+
 -- == modes ==
 local mode_manager = Modes.ModeManager.new(waywall)
 
@@ -788,11 +785,11 @@ mode_manager:define("thin", {
     height = 1080,
     on_enter = function()
         scene:enable_group("thin", true)
-        scene:enable_group("normal", false)
+
     end,
     on_exit = function()
         scene:enable_group("thin", false)
-        scene:enable_group("normal", true)
+
     end
 })
 
@@ -804,11 +801,13 @@ mode_manager:define("tall", {
     end,
     on_enter = function()
         scene:enable_group("tall", true)
-        scene:enable_group("normal", false)
+        if not (waywall.get_key("RIGHTSHIFT") or waywall.get_key("LEFTSHIFT")) then
+            waywall.set_sensitivity(tall_sens)
+        end
     end,
     on_exit = function()
         scene:enable_group("tall", false)
-        scene:enable_group("normal", true)
+        waywall.set_sensitivity(normal_sens)
     end
 })
 
@@ -817,11 +816,9 @@ mode_manager:define("wide", {
     height = 300,
     on_enter = function()
         scene:enable_group("wide", true)
-        scene:enable_group("normal", false)
     end,
     on_exit = function()
         scene:enable_group("wide", false)
-        scene:enable_group("normal", true)
     end
 })
 
@@ -830,11 +827,24 @@ local ensure_ninjabrain = Processes.ensure_java_jar(waywall, java_path, ninbot_p
     {"-Dawt.useSystemAAFontSettings=on"})(ninbot_path)
 local ensure_paceman = Processes.ensure_java_jar(waywall, java_path, paceman_path, {"--nogui"})(paceman_path)
 
+-- == nbtrackr process ==
+local is_nbtrackr_running = function()
+    local handle = io.popen("pgrep -fx 'nbtrackr --headless'")
+    local result = handle:read("*l")
+    handle:close()
+    return result ~= nil
+end
+
+local ensure_nbtrackr = function()
+    if not is_nbtrackr_running() then
+        waywall.exec("nbtrackr --headless")
+    end
+end
+
 -- == action helper booleans ==
 -- = ninbot =
 local is_ninb_ensured = false
 
--- == sensitivity toggle ==
 local current_sens = "normal"
 
 local function apply_sens()
@@ -844,12 +854,31 @@ local function apply_sens()
         waywall.set_sensitivity(tall_sens)
     end
 end
+
 -- = remaps =
 local remaps_active = true
 local remaps_text = nil
 local tall_enabled = false
 
-local nb_overlay = require("waywall_ninbot_overlay.nb_overlay")
+local function run_sequence(seq)
+    for _, item in ipairs(seq) do
+        local key, count
+
+        if type(item) == "table" then
+            key, count = item[1], item[2]
+        else
+            key, count = item, 1
+        end
+
+        for i = 1, count do
+            waywall.press_key(key)
+        end
+    end
+end
+
+local is_ninb_ensured = false
+local imgpin_overlay = nil
+local imgpin_counter = 0
 
 -- == config actions ==
 local actions = Keys.actions({
@@ -883,33 +912,21 @@ local actions = Keys.actions({
         return mode_manager:toggle("wide")
     end,
 
-    ["F5"] = function()
-        if waywall.get_key("F3") then
-            waywall.press_key("C")
-            waywall.sleep(200)
-            nb_overlay.enable_overlay()
-        else
-            return false
-        end
-    end,
-
-    ["*-P"] = nb_overlay.disable_overlay,
-
     -- = fullscreen toggle =
     [keys.fullscreen] = waywall.toggle_fullscreen,
 
-    -- = nbb =
     [keys.toggle_ninbot] = function()
-        -- ensure ninbot/toggle override
         if not is_ninb_ensured then
             ensure_ninjabrain()
             is_ninb_ensured = true
             waywall.show_floating(true)
+            waywall.sleep(2000)
+            ensure_nbtrackr()
         else
             helpers.toggle_floating()
         end
     end,
-    -- show ninbot on F3+C
+
     ["*-C"] = function()
         if waywall.get_key("F3") then
             waywall.show_floating(true)
@@ -917,6 +934,47 @@ local actions = Keys.actions({
         else
             return false
         end
+    end,
+
+    ["F5"] = function()
+        if waywall.get_key("F3") then
+            waywall.press_key("C")
+            waywall.sleep(100)
+            local f = io.open("/tmp/imgpin-overlay.png", "rb")
+            if f then
+                f:seek("set", 16)
+                local w1, w2, w3, w4 = f:read(1):byte(), f:read(1):byte(), f:read(1):byte(), f:read(1):byte()
+                local h1, h2, h3, h4 = f:read(1):byte(), f:read(1):byte(), f:read(1):byte(), f:read(1):byte()
+                f:close()
+                local img_w = w1 * 16777216 + w2 * 65536 + w3 * 256 + w4
+                local img_h = h1 * 16777216 + h2 * 65536 + h3 * 256 + h4
+                imgpin_counter = imgpin_counter + 1
+                local tmp_path = "/tmp/imgpin-overlay-" .. (imgpin_counter % 2) .. ".png"
+                os.execute("cp /tmp/imgpin-overlay.png " .. tmp_path)
+                if imgpin_overlay then
+                    imgpin_overlay:close()
+                    imgpin_overlay = nil
+                end
+                imgpin_overlay = waywall.image(tmp_path, {
+                    dst = {
+                        x = 0,
+                        y = 245,
+                        w = img_w,
+                        h = img_h
+                    }
+                })
+            end
+        else
+            return false
+        end
+    end,
+
+    ["*-P"] = function()
+        if imgpin_overlay then
+            imgpin_overlay:close()
+            imgpin_overlay = nil
+        end
+        return false
     end,
 
     -- = paceman =
@@ -942,7 +1000,7 @@ local actions = Keys.actions({
                 x = 100,
                 y = 100,
                 color = "#FFFFFF",
-                size = 1
+                size = 2
             })
         else
             -- turn on all rebinds
@@ -952,24 +1010,17 @@ local actions = Keys.actions({
                 layout = xkb_layout
             })
         end
-    end,
-
-    [keys.create_world] = function()
-        for _, key in ipairs({"Tab", "Space", "Tab", "Tab", "Tab", "Space", "Tab", "Space", "Space", "Tab", "Tab",
-                              "Tab", "Tab", "Tab", "Tab", "Space"}) do
-            waywall.press_key(key)
-        end
-    end
+    end,    
 })
 
 config.actions = actions
 
 -- == plugins ==
--- plug.setup({
---     dir = "plugins",
---     config = config,
---     path = "~/.config/waywall/plugins/",
--- })
+plug.setup({
+    dir = "plugins",
+    config = config,
+    path = "~/.config/waywall/plugins/"
+})
+require("waywordle.init").setup(config)
 
 return config
-
